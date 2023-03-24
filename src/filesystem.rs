@@ -1,8 +1,8 @@
 use std::{
     cell::RefCell,
-    fs::{self, DirEntry},
+    fs::{self, DirEntry, File, OpenOptions},
     io,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf, MAIN_SEPARATOR},
 };
 
 fn has_extension(filename: &str, extensions: &Vec<&str>) -> bool {
@@ -39,6 +39,22 @@ pub fn collect_path_with_ext(start_at: &Path, extensions: &Vec<&str>) -> io::Res
     let paths = paths.borrow();
 
     Ok(paths.to_vec())
+}
+
+pub fn touch<P>(path: &P) -> io::Result<File>
+where
+    P: AsRef<Path>,
+{
+    Ok(OpenOptions::new().create(true).write(true).open(path)?)
+}
+
+pub fn ensure_dir_exists(path: &str) -> io::Result<()> {
+    let mut split_path = path.split(MAIN_SEPARATOR).collect::<Vec<&str>>();
+    split_path.pop();
+    let joined = split_path.join(&MAIN_SEPARATOR.to_string());
+
+    fs::create_dir_all(&joined)?;
+    Ok(())
 }
 
 #[cfg(test)]
