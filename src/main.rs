@@ -1,5 +1,6 @@
 mod filesystem;
 
+use liquid;
 use markdown;
 use std::{
     fs::File,
@@ -17,6 +18,14 @@ fn collect_site_markdown_files() -> io::Result<Vec<PathBuf>> {
     )?)
 }
 
+fn get_base_liquid_template() -> io::Result<String> {
+    let mut file = File::open("./templates/base.liquid")?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+
+    Ok(content)
+}
+
 fn md_path_to_public_path(path: &PathBuf) -> PathBuf {
     let copy = path.clone();
     let copy = copy.as_os_str().to_str().unwrap();
@@ -30,6 +39,8 @@ fn md_path_to_public_path(path: &PathBuf) -> PathBuf {
 
 fn main() -> io::Result<()> {
     let markdown_paths = collect_site_markdown_files()?;
+    let template_builder = liquid::ParserBuilder::with_stdlib().build().unwrap();
+    let base_template_content = get_base_liquid_template()?;
 
     for path in markdown_paths {
         let output_path = md_path_to_public_path(&path);
@@ -44,7 +55,15 @@ fn main() -> io::Result<()> {
             ensure_dir_exists(&path)?;
             let mut output_file = touch(&path)?;
 
-            output_file.write_all(markup.as_bytes())?;
+            let template_parser = template_builder.parse(&base_template_content).unwrap();
+
+            let globals = liquid::object!({
+                "body": markup,
+            });
+
+            let output = template_parser.render(&globals).unwrap();
+
+            output_file.write_all(output.as_bytes())?;
         }
     }
 
