@@ -1,7 +1,11 @@
 mod filesystem;
 
 use liquid;
-use markdown::{self, Constructs, Options, ParseOptions};
+use markdown::{
+    self,
+    mdast::{Node, Yaml},
+    Constructs, Options, ParseOptions,
+};
 use std::{
     fs::File,
     io,
@@ -37,6 +41,22 @@ fn md_path_to_public_path(path: &PathBuf) -> PathBuf {
     path
 }
 
+fn extract_yaml_frontmatter(node: &Node) -> Option<Yaml> {
+    if let Some(children) = node.children() {
+        let mut possible_yaml_vec = children
+            .into_iter()
+            .filter_map(|n| match n {
+                Node::Yaml(x) => Some(x.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        return possible_yaml_vec.pop();
+    }
+
+    None
+}
+
 fn main() -> io::Result<()> {
     let markdown_paths = collect_site_markdown_files()?;
     let template_builder = liquid::ParserBuilder::with_stdlib().build().unwrap();
@@ -68,6 +88,7 @@ fn main() -> io::Result<()> {
         let _mdast = markdown::to_mdast(&contents, &to_html_options.parse).unwrap();
 
         // Extract `Yaml` node and parse that into the `globals` below.
+        let yaml = extract_yaml_frontmatter(&_mdast);
         // Convert mdast to HTML
 
         if let Some(path) = output_path.to_str() {
