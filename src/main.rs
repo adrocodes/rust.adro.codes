@@ -1,7 +1,7 @@
 mod filesystem;
 
 use liquid;
-use markdown;
+use markdown::{self, Constructs, Options, ParseOptions};
 use std::{
     fs::File,
     io,
@@ -41,6 +41,18 @@ fn main() -> io::Result<()> {
     let markdown_paths = collect_site_markdown_files()?;
     let template_builder = liquid::ParserBuilder::with_stdlib().build().unwrap();
     let base_template_content = get_base_liquid_template()?;
+    let default_options = Options::gfm();
+
+    let to_html_options = Options {
+        parse: ParseOptions {
+            constructs: Constructs {
+                frontmatter: true,
+                ..default_options.parse.constructs
+            },
+            ..default_options.parse
+        },
+        ..default_options
+    };
 
     for path in markdown_paths {
         let output_path = md_path_to_public_path(&path);
@@ -49,12 +61,22 @@ fn main() -> io::Result<()> {
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
 
-        let markup = markdown::to_html(&contents);
+        let markup: String = match markdown::to_html_with_options(&contents, &to_html_options) {
+            Ok(content) => content,
+            Err(_) => String::from(""),
+        };
+        let _mdast = markdown::to_mdast(&contents, &to_html_options.parse).unwrap();
+
+        // Extract `Yaml` node and parse that into the `globals` below.
+        // Convert mdast to HTML
 
         if let Some(path) = output_path.to_str() {
             ensure_dir_exists(&path)?;
             let mut output_file = touch(&path)?;
 
+            // parse markdown with liquid with `globals` including the YAML frontmatter
+
+            // Parse the parsed markdown into the template
             let template_parser = template_builder.parse(&base_template_content).unwrap();
 
             let globals = liquid::object!({
