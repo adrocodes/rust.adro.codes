@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 liquid = "0.26.1"
 markdown = "1.0.0-alpha.7"
+yaml-rust = "0.4.5"
