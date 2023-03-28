@@ -1,4 +1,5 @@
 mod filesystem;
+mod yaml;
 
 use liquid;
 use markdown::{
@@ -12,8 +13,10 @@ use std::{
     io::prelude::*,
     path::{Path, PathBuf, MAIN_SEPARATOR},
 };
+use yaml_rust::YamlLoader;
 
 use filesystem::{collect_path_with_ext, ensure_dir_exists, touch};
+use yaml::YamlIntoObject;
 
 fn collect_site_markdown_files() -> io::Result<Vec<PathBuf>> {
     Ok(collect_path_with_ext(
@@ -88,7 +91,15 @@ fn main() -> io::Result<()> {
         let _mdast = markdown::to_mdast(&contents, &to_html_options.parse).unwrap();
 
         // Extract `Yaml` node and parse that into the `globals` below.
-        let yaml = extract_yaml_frontmatter(&_mdast);
+        let yaml = extract_yaml_frontmatter(&_mdast).unwrap_or(Yaml {
+            value: String::new(),
+            position: None,
+        });
+
+        let docs = YamlLoader::load_from_str(&yaml.value).unwrap();
+        let _globals = docs.to_liquid_object();
+
+        println!("{docs:?}");
         // Convert mdast to HTML
 
         if let Some(path) = output_path.to_str() {
