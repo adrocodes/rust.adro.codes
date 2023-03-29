@@ -99,7 +99,8 @@ fn main() -> io::Result<()> {
         let docs = YamlLoader::load_from_str(&yaml.value).unwrap();
         let _globals = docs.to_liquid_object();
 
-        println!("{docs:?}");
+        println!("{_globals:?}");
+
         // Convert mdast to HTML
 
         if let Some(path) = output_path.to_str() {
