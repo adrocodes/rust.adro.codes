@@ -1,7 +1,7 @@
 use liquid::{
     model::{
         ScalarCow,
-        Value::{Array, Nil, Scalar},
+        Value::{self, Array, Nil, Scalar},
     },
     Object,
 };
@@ -11,30 +11,24 @@ pub trait YamlIntoObject {
     fn to_liquid_object(&self) -> Object;
 }
 
-fn decode_and_set_for_key(value: &Yaml, key: String, obj: &mut Object) {
+fn yaml_to_liquid_value(value: &Yaml) -> Value {
     match value {
         Yaml::Real(r) => {
             if let Ok(r) = r.parse::<f64>() {
-                obj.insert(key.into(), Scalar(ScalarCow::new(r)));
+                return Scalar(ScalarCow::new(r));
             }
+
+            Nil
         }
-        Yaml::Integer(i) => {
-            obj.insert(key.into(), Scalar(ScalarCow::new(*i)));
+        Yaml::Integer(i) => Scalar(ScalarCow::new(*i)),
+        Yaml::String(s) => Scalar(ScalarCow::new(s.clone())),
+        Yaml::Boolean(b) => Scalar(ScalarCow::new(*b)),
+        Yaml::Array(arr) => {
+            let mapped = arr.iter().map(yaml_to_liquid_value).collect::<Vec<_>>();
+            Array(mapped)
         }
-        Yaml::String(s) => {
-            obj.insert(key.into(), Scalar(ScalarCow::new(s.clone())));
-        }
-        Yaml::Boolean(b) => {
-            obj.insert(key.into(), Scalar(ScalarCow::new(*b)));
-        }
-        // TODO:
-        // Yaml::Array(arr) => {
-        //     // obj.insert(key.into(), liquid::model::Value::Array(arr.clone()));
-        // }
-        _ => {
-            obj.insert(key.into(), Nil);
-        }
-    };
+        _ => Nil,
+    }
 }
 
 fn decode_hash(hash: &Hash) -> Object {
@@ -50,9 +44,7 @@ fn decode_hash(hash: &Hash) -> Object {
             continue;
         }
 
-        let key = key.unwrap();
-
-        decode_and_set_for_key(v, key, &mut obj);
+        obj.insert(key.unwrap().into(), yaml_to_liquid_value(v));
     }
 
     obj
