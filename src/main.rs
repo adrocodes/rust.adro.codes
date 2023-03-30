@@ -64,7 +64,7 @@ fn main() -> io::Result<()> {
     let markdown_paths = collect_site_markdown_files()?;
     let template_builder = liquid::ParserBuilder::with_stdlib().build().unwrap();
     let base_template_content = get_base_liquid_template()?;
-    let default_options = Options::gfm();
+    let default_options = Options::default();
 
     let to_html_options = Options {
         parse: ParseOptions {
@@ -79,6 +79,13 @@ fn main() -> io::Result<()> {
 
     for path in markdown_paths {
         let output_path = md_path_to_public_path(&path);
+        let output_path = output_path.to_str();
+
+        if output_path.is_none() {
+            continue;
+        }
+
+        let output_path = output_path.unwrap();
 
         let mut file = File::open(path)?;
         let mut contents = String::new();
@@ -88,38 +95,37 @@ fn main() -> io::Result<()> {
             Ok(content) => content,
             Err(_) => String::from(""),
         };
-        let _mdast = markdown::to_mdast(&contents, &to_html_options.parse).unwrap();
+        let mdast = markdown::to_mdast(&contents, &to_html_options.parse).unwrap();
 
         // Extract `Yaml` node and parse that into the `globals` below.
-        let yaml = extract_yaml_frontmatter(&_mdast).unwrap_or(Yaml {
+        let yaml = extract_yaml_frontmatter(&mdast).unwrap_or(Yaml {
             value: String::new(),
             position: None,
         });
 
         let docs = YamlLoader::load_from_str(&yaml.value).unwrap();
-        let _globals = docs.to_liquid_object();
+        let mut _globals = docs.to_liquid_object();
 
-        println!("{_globals:?}");
+        // TODO: Need changes in https://github.com/cobalt-org/liquid-rust/pull/492 to allow for missing variables
+        // parse markdown with liquid with `globals` including the YAML frontmatter
+        // let markup_liquid_parsed = template_builder
+        //     .parse(&markup)
+        //     .unwrap()
+        //     .render(&globals)
+        //     .unwrap();
 
-        // Convert mdast to HTML
+        ensure_dir_exists(&output_path)?;
+        let mut output_file = touch(&output_path)?;
 
-        if let Some(path) = output_path.to_str() {
-            ensure_dir_exists(&path)?;
-            let mut output_file = touch(&path)?;
+        // Parse the parsed markdown into the template
+        let template_parser = template_builder.parse(&base_template_content).unwrap();
 
-            // parse markdown with liquid with `globals` including the YAML frontmatter
+        // globals.insert("body".into(), Scalar(ScalarCow::new(markup_liquid_parsed)));
+        let globals = liquid::object!({ "body": markup });
 
-            // Parse the parsed markdown into the template
-            let template_parser = template_builder.parse(&base_template_content).unwrap();
+        let output = template_parser.render(&globals).unwrap();
 
-            let globals = liquid::object!({
-                "body": markup,
-            });
-
-            let output = template_parser.render(&globals).unwrap();
-
-            output_file.write_all(output.as_bytes())?;
-        }
+        output_file.write_all(output.as_bytes())?;
     }
 
     Ok(())
