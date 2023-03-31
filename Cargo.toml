@@ -6,6 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-liquid = "0.26.1"
+liquid = { git = "https://github.com/adrocodes/liquid-rust", branch = "feat/relaxed-filtering" }
 markdown = "1.0.0-alpha.7"
 yaml-rust = "0.4.5"

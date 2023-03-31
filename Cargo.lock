@@ -129,8 +129,7 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 [[package]]
 name = "liquid"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dfb833f0d41ed59a6c8d28e2f36d0362557c43fa83e9e096dd74e6e9517858f"
+source = "git+https://github.com/adrocodes/liquid-rust?branch=feat/relaxed-filtering#92caeff9e34e5c2814d89fe768fb00bab6f663a8"
 dependencies = [
  "doc-comment",
  "liquid-core",
@@ -142,8 +141,7 @@ dependencies = [
 [[package]]
 name = "liquid-core"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca2b58598eeb2cd39ea0e0b6c666bab002b4f58ebbeedcc649d164d6dec4b886"
+source = "git+https://github.com/adrocodes/liquid-rust?branch=feat/relaxed-filtering#92caeff9e34e5c2814d89fe768fb00bab6f663a8"
 dependencies = [
  "anymap2",
  "itertools",
@@ -160,8 +158,7 @@ dependencies = [
 [[package]]
 name = "liquid-derive"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "611c6adfb96294233bd6f20125684a6e3dd28c3f0d057d50a65adf2426ed3f47"
+source = "git+https://github.com/adrocodes/liquid-rust?branch=feat/relaxed-filtering#92caeff9e34e5c2814d89fe768fb00bab6f663a8"
 dependencies = [
  "proc-macro2",
  "proc-quote",
@@ -171,8 +168,7 @@ dependencies = [
 [[package]]
 name = "liquid-lib"
 version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3ffe1daafef416a71da31385dd3764906cbde22349767a8458d30c96644a512"
+source = "git+https://github.com/adrocodes/liquid-rust?branch=feat/relaxed-filtering#92caeff9e34e5c2814d89fe768fb00bab6f663a8"
 dependencies = [
  "itertools",
  "liquid-core",
